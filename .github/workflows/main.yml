@@ -1,0 +1,27 @@
+name: Build APK
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "::set-output name=date::$(date +'%Y-%m-%d')"
+      - name: Cache Buildozer
+        uses: actions/cache@v2
+        with:
+          path: .buildozer
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+      - name: Build with Buildozer
+        uses: ArtemSerebrennikov/buildozer-action@v1
+        with:
+          buildozer_version: master
+          command: android debug
+      - name: Upload APK
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: bin/*.apk
