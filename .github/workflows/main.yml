@@ -1,26 +1,35 @@
 name: Build APK
-on: [push, pull_request]
+on: 
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
-      - name: Get Date
-        id: get-date
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-code: '3.8'
+
+      - name: Install Dependencies
         run: |
-          echo "::set-output name=date::$(date +'%Y-%m-%d')"
-      - name: Cache Buildozer
-        uses: actions/cache@v2
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.33 kivy
+
       - name: Build with Buildozer
-        uses: ArtemSerebrennikov/buildozer-action@v1
-        with:
-          buildozer_version: master
-          command: android debug
-      - name: Upload APK
+        run: |
+          yes | buildozer -v android debug
+        continue-on-error: false
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v2
         with:
           name: package
